@@ -1,5 +1,12 @@
 #  Build, Test, and Deploy a E-commerce smart contract using Hardhat on Celo Alfajores Testnet
 
+# TABLE OF CONTENT
+  - [Prerequisites](#prerequisites)
+  - [Step 1: Set Up the Development Enviroment](#step-1-set-up-the-development-enviroment)
+  - [Step 2: Create the Smart Contract](#step-2-create-the-smart-contract)
+  - [Step 3: Write the Test File](#step-3-write-the-test-file)
+  - [Step 4: Deploy the Mundo smart contract on Celo](#step-4-deploy-the-mundo-smart-contract-on-celo)
+
 In this tutorial, we will walk through the process of building, testing, and deploying
 an E-commercesmart contract using Hardhat as the development
 framework and Celo Alfajores Testnet as the blockchain network. We will use the provided smart
@@ -7,13 +14,13 @@ contract called "Mundo" for the E-commerce functionality.
 
 The tutorial assumes you have basic development and Solidity.
 
-Prerequisites:
+### Prerequisites:
 
 - Basic knowledge of Ethereum development
 - Node.js and npm installed
 - Familiarity with JavaScript and Solidity
 
-## Step 1: Set Up the Development Environment
+## Step 1: Set Up the Development Enviroment
 
 1. Create a new directory for your project and navigate to it using the command line.
 2. Initialize a new npm project by running the following command
