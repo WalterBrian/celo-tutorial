@@ -65,106 +65,187 @@ Create a new file called `Mundo.sol` in the contracts directory. This contract w
 pragma solidity ^0.8.9;
 
 contract Mundo {
-    address public owner;
+  
+  /**
+  * @dev Public address variable representing the owner of the contract.
+  * The owner has privileged access and can perform certain actions.
+  */
+  address public owner;
 
-    struct Item {
-        uint256 id;
-        string name;
-        string category;
-        string image;
-        uint256 cost;
-        uint256 rating;
-        uint256 stock;
-        string description;
-    }
 
-    struct Order {
-        uint256 time;
-        Item item;
-    }
+  /**
+   * @dev Struct representing an item.
+   * Contains various properties such as ID, name, category, image, cost, rating, stock, and description.
+   */
+  struct Item {
+      uint256 id;             // The unique ID of the item.
+      string name;            // The name of the item.
+      string category;        // The category of the item.
+      string image;           // The image associated with the item.
+      uint256 cost;           // The cost of the item.
+      uint256 rating;         // The rating of the item.
+      uint256 stock;          // The available stock of the item.
+      string description;     // The description of the item.
+  }
 
-    mapping(uint256 => Item) public items;
-    mapping(address => mapping(uint256 => Order)) public orders;
-    mapping(address => uint256) public orderCount;
+  /**
+   * @dev Struct representing an order.
+   * Contains the time of the order and the associated item.
+   */
+  struct Order {
+      uint256 time;   // The timestamp when the order was created.
+      Item item;      // The item associated with the order.
+  }
 
-    event Buy(address buyer, uint256 orderId, uint256 itemId);
-    event List(string name, uint256 cost, uint256 quantity);
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+  /**
+  * @dev Mapping of item IDs to Item structs.
+  * Allows public access to retrieve Item information by ID.
+  */
+  mapping(uint256 => Item) public items;
 
-    constructor() {
-        owner = msg.sender;
-    }
+  /**
+  * @dev Mapping of user addresses to mapping of order IDs to Order structs.
+  * Allows public access to retrieve user orders by address and order ID.
+  */
+  mapping(address => mapping(uint256 => Order)) public orders;
 
-    function list(
-        uint256 _id,
-        string memory _name,
-        string memory _category,
-        string memory _image,
-        uint256 _cost,
-        uint256 _rating,
-        uint256 _stock,
-        string memory _description
-    ) public onlyOwner {
-        // Create Item
-        Item memory item = Item(
-            _id,
-            _name,
-            _category,
-            _image,
-            _cost,
-            _rating,
-            _stock,
-            _description
-        );
+  /**
+  * @dev Mapping of user addresses to order counts.
+  * Allows public access to retrieve the count of orders for a specific user.
+  */
+  mapping(address => uint256) public orderCount;
 
-        // Add Item to mapping
-        items[_id] = item;
+  /**
+  * @dev Event emitted when an item is purchased.
+  * @param buyer The address of the buyer.
+  * @param orderId The ID of the order.
+  * @param itemId The ID of the item purchased.
+  */
+  event Buy(address buyer, uint256 orderId, uint256 itemId);
 
-        // Emit event
-        emit List(_name, _cost, _stock);
-    }
+  /**
+  * @dev Event emitted when an item is listed.
+  * @param name The name of the listed item.
+  * @param cost The cost of the listed item.
+  * @param quantity The quantity of the listed item.
+  */
+  event List(string name, uint256 cost, uint256 quantity);
 
-    function buy(uint256 _id) public payable {
-        // Fetch item
-        Item memory item = items[_id];
+  /**
+  * @dev Event emitted when the contract owner withdraws funds.
+  * @param owner The address of the contract owner.
+  * @param amount The amount of funds withdrawn.
+  */
+  event Withdraw(address owner, uint256 amount);
 
-        // Require enough ether to buy item
-        require(msg.value >= item.cost);
+  /**
+  * @dev Modifier to restrict access to only the contract owner.
+  * Reverts the transaction with an error message if the sender is not the contract owner.
+  */
+  modifier onlyOwner() {
+      require(msg.sender == owner, "Only the contract owner can perform this action.");
+      _;
+  }
 
-        // Require item is in stock
-        require(item.stock > 0);
+  /**
+  * @dev Contract constructor.
+  * It sets the contract owner as the sender of the transaction.
+  */
+  constructor() {
+      owner = msg.sender;
+  }
 
-        // Create order
-        Order memory order = Order(block.timestamp, item);
+  /**
+  * @dev Creates a new item listing in the marketplace.
+  * @param _id The ID of the item.
+  * @param _name The name of the item.
+  * @param _category The category of the item.
+  * @param _image The image URL of the item.
+  * @param _cost The cost of the item.
+  * @param _rating The rating of the item.
+  * @param _stock The stock quantity of the item.
+  * @param _description The description of the item.
+  */
+  function list(
+      uint256 _id,
+      string memory _name,
+      string memory _category,
+      string memory _image,
+      uint256 _cost,
+      uint256 _rating,
+      uint256 _stock,
+      string memory _description
+  ) public onlyOwner {
+    require(_id > 0, "Invalid item ID.");
+    require(bytes(_name).length > 0, "Item name cannot be empty.");
+    require(bytes(_category).length > 0, "Item category cannot be empty.");
+    require(bytes(_image).length > 0, "Item image cannot be empty.");
+    require(_cost > 0, "Item cost must be greater than zero.");
+    require(_stock >= 0, "Item stock cannot be negative.");
+    // Create Item
+    Item memory item = Item(
+        _id,
+        _name,
+        _category,
+        _image,
+        _cost,
+        _rating,
+        _stock,
+        _description
+    );
+    // Add Item to mapping
+    items[_id] = item;
+    emit List(_name, _cost, _stock);
+  }
 
-        // Add order for user
-        orderCount[msg.sender]++; // <-- Order ID
-        orders[msg.sender][orderCount[msg.sender]] = order;
 
-        // Subtract stock
-        items[_id].stock = item.stock - 1;
+  /**
+  * @dev Allows a user to purchase an item from the marketplace.
+  * @param _id The ID of the item to be purchased.
+  */
+  function buy(uint256 _id) public payable {
+    require(_id > 0, "Invalid item ID.");
+      // Fetch item
+      Item memory item = items[_id];
+      // Require enough ether to buy item
+      require(msg.value >= item.cost);
+      // Require item is in stock
+      require(item.stock > 0);
+      // Create order
+      Order memory order = Order(block.timestamp, item);
+      // Add order for user
+      orderCount[msg.sender]++; // <-- Order ID
+      orders[msg.sender][orderCount[msg.sender]] = order;
+      // Subtract stock
+      items[_id].stock = item.stock - 1;
+      // Emit event
+      emit Buy(msg.sender, orderCount[msg.sender], item.id);
+  }
 
-        // Emit event
-        emit Buy(msg.sender, orderCount[msg.sender], item.id);
-    }
+  /**
+  * @dev Allows the contract owner to withdraw the contract's balance.
+  */
+  function withdraw() public onlyOwner {
+    uint256 balance = address(this).balance;
+    (bool success, ) = owner.call{value: address(this).balance}("");
+    require(success);
+    emit Withdraw(owner, balance);
+  }
 
-    function withdraw() public onlyOwner {
-        (bool success, ) = owner.call{value: address(this).balance}("");
-        require(success);
-    }
 
-      // getters function
-    function getItem(uint256 itemId)
-        external
-        view
-        returns (Item memory)
-    {
-        return items[itemId];
-    }
+  /**
+  * @dev Retrieves the details of an item by its ID.
+  * @param itemId The ID of the item to retrieve.
+  * @return item The details of the item.
+  */
+  function getItem(uint256 itemId) external view returns (Item memory)
+  {
+    require(itemId > 0, "Invalid item ID.");
+    return items[itemId];
+  }
+
+
 }
 ```
 
